@@ -5,20 +5,20 @@ description = "VRChat Poker GTO system with pamiq-core integration."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "pamiq-core>=0.6.0",
-    "mss>=9.0.0",
-    "numpy>=1.24.0",
-    "opencv-python>=4.8.0",
-    "pytesseract>=0.3.10",
-    "python-osc>=1.8.0",
+    "pamiq-core",
+    "mss",
+    "numpy",
+    "opencv-python",
+    "pytesseract",
+    "python-osc"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3.0",
-    "pytest-asyncio>=0.26.0",
-    "pytest-cov>=6.0.0",
-    "ruff>=0.6.0",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "ruff",
 ]
 
 [project.scripts]
@@ -33,10 +33,10 @@ packages = ["src/poker_gto"]
 
 [dependency-groups]
 dev = [
-    "pytest>=8.3.0",
-    "pytest-asyncio>=0.26.0",
-    "pytest-cov>=6.0.0",
-    "ruff>=0.6.0",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "ruff",
 ]
 
 [tool.ruff]
