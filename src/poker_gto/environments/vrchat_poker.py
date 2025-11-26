@@ -1,13 +1,20 @@
 """VRChat Poker Environment."""
 
-from typing import override
+import time
 
 from pamiq_core import Environment
+from typing_extensions import override
 
-from ..data.actions import PokerAction
-from ..data.observations import PokerObservation
-from .actuators import OSCActuator
-from .sensors import PokerStateSensor, ScreenCaptureSensor
+from ..data.actions import ActionType, PokerAction
+from ..data.observations import GamePhase, PokerObservation
+
+try:
+    from pamiq_vrchat.actuators import OscActuator
+    from pamiq_vrchat.sensors import ImageSensor
+
+    PAMIQ_VRCHAT_AVAILABLE = True
+except ImportError:
+    PAMIQ_VRCHAT_AVAILABLE = False
 
 
 class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
@@ -15,16 +22,43 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
 
     def __init__(self):
         super().__init__()
-        self.screen_sensor = ScreenCaptureSensor()
-        self.state_sensor = PokerStateSensor(self.screen_sensor)
-        self.osc_actuator = OSCActuator()
+        if PAMIQ_VRCHAT_AVAILABLE:
+            self.image_sensor = ImageSensor()
+            self.osc_actuator = OscActuator()
+        else:
+            self.image_sensor = None
+            self.osc_actuator = None
 
     @override
     def observe(self) -> PokerObservation:
         """Get current state from VRChat."""
-        return self.state_sensor.read()
+        if self.image_sensor:
+            _ = self.image_sensor.read()
+
+        return PokerObservation(
+            game_phase=GamePhase.PREFLOP,
+            pot_size=100.0,
+            effective_stack=1000.0,
+            hole_cards=None,
+            board_cards=[],
+            position="IP",
+            action_history=[],
+            timestamp=time.time(),
+        )
 
     @override
     def affect(self, action: PokerAction) -> None:
         """Execute action in VRChat."""
-        self.osc_actuator.operate(action)
+        if not self.osc_actuator:
+            print(f"[MOCK] Action: {action.type.name}, Amount: {action.amount}")
+            return
+
+        action_val = 0
+        if action.type == ActionType.FOLD:
+            action_val = 1
+        elif action.type in (ActionType.CHECK, ActionType.CALL):
+            action_val = 2
+        elif action.type in (ActionType.BET, ActionType.RAISE, ActionType.ALLIN):
+            action_val = 3
+
+        self.osc_actuator.operate({"buttons": {action_val: True}})

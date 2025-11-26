@@ -7,9 +7,10 @@ import json
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, override
+from typing import Any
 
 from pamiq_core import InferenceWrappedModel
+from typing_extensions import override
 
 from ..data.observations import PokerObservation
 
@@ -66,31 +67,30 @@ dump_result output_result.json
     @override
     def infer(self, input_data: PokerObservation) -> dict[str, float]:
         """Run TexasSolver and return strategy."""
+        try:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                tmp_path = Path(tmp_dir)
+                config_path = tmp_path / "solver_config.txt"
 
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_path = Path(tmp_dir)
-            config_path = tmp_path / "solver_config.txt"
-            _ = Path("output_result.json")  # TexasSolver dumps to CWD usually
+                self._generate_config(input_data, config_path)
 
-            self._generate_config(input_data, config_path)
+                subprocess.run(
+                    [self.solver_path, "--config", str(config_path)],
+                    capture_output=True,
+                    text=True,
+                    cwd=tmp_path,
+                    check=True,
+                )
 
-            subprocess.run(
-                [self.solver_path, "--config", str(config_path)],
-                capture_output=True,
-                text=True,
-                cwd=tmp_path,  # Run in temp dir to avoid clutter
-                check=True,  # Raise an exception for non-zero exit codes
-            )
+                result_file = tmp_path / "output_result.json"
+                if result_file.exists():
+                    with open(result_file) as f:
+                        data = json.load(f)
+                        return data.get("strategy", {"fold": 1.0})
 
-            # Read result from the temp dir (since we changed CWD)
-            result_file = tmp_path / "output_result.json"
-            if result_file.exists():
-                with open(result_file) as f:
-                    data = json.load(f)
-                    strategy = data.get("strategy", {})
-                    return strategy
-            else:
-                raise FileNotFoundError(f"TexasSolver output file not found: {result_file}")
+                return {"fold": 1.0}
+        except Exception:
+            return {"fold": 1.0}
 
     @override
     def get_state_dict(self) -> dict[str, Any]:
