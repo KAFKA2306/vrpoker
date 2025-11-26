@@ -5,9 +5,17 @@ vars:
 
 tasks:
   install:
-    desc: 依存関係をインストール
+    desc: 依存関係をインストール (共通)
     cmds:
       - uv sync
+
+  install:linux:
+    desc: Linux用依存関係のインストール (sudoが必要)
+    cmds:
+      - sudo apt update && sudo apt install -y git cmake build-essential pkg-config libevdev-dev obs-studio
+      - uv pip install "git+https://github.com/games-on-whales/inputtino.git#subdirectory=bindings/python&branch=stable"
+      - uv pip install pamiq-vrchat
+      - task install
   fix:
     desc: Lintエラーを自動修正してフォーマット
     cmds:

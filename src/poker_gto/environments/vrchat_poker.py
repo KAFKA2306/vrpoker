@@ -9,7 +9,7 @@ from ..data.actions import ActionType, PokerAction
 from ..data.observations import GamePhase, PokerObservation
 
 try:
-    from pamiq_vrchat.actuators import OscActuator
+    from pamiq_vrchat.actuators import OscActuator, OscButtons
     from pamiq_vrchat.sensors import ImageSensor
 
     PAMIQ_VRCHAT_AVAILABLE = True
@@ -23,7 +23,11 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
     def __init__(self):
         super().__init__()
         if PAMIQ_VRCHAT_AVAILABLE:
-            self.image_sensor = ImageSensor()
+            try:
+                self.image_sensor = ImageSensor()
+            except RuntimeError as e:
+                print(f"Warning: Failed to initialize ImageSensor: {e}")
+                self.image_sensor = None
             self.osc_actuator = OscActuator()
         else:
             self.image_sensor = None
@@ -53,12 +57,13 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
             print(f"[MOCK] Action: {action.type.name}, Amount: {action.amount}")
             return
 
-        action_val = 0
+        action_val = None
         if action.type == ActionType.FOLD:
-            action_val = 1
+            action_val = OscButtons.Jump
         elif action.type in (ActionType.CHECK, ActionType.CALL):
-            action_val = 2
+            action_val = OscButtons.Run
         elif action.type in (ActionType.BET, ActionType.RAISE, ActionType.ALLIN):
-            action_val = 3
+            action_val = OscButtons.MoveForward
 
-        self.osc_actuator.operate({"buttons": {action_val: True}})
+        if action_val:
+            self.osc_actuator.operate({"buttons": {action_val: True}})

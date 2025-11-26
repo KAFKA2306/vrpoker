@@ -180,4 +180,4 @@ cython_debug/
 /debug/
 moc_*.cpp
 ui_*.h
-qrc_*.cpp
+qrc_*.cpptmp_install/
