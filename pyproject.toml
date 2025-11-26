@@ -9,6 +9,7 @@ dependencies = [
     "pamiq-recorder",
     "pamiq-io",
     "pamiq-vrchat",
+    "inputtino-python",
 ]
 
 [project.optional-dependencies]
@@ -34,3 +35,11 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
+
+[tool.uv]
+environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+
+[tool.uv.sources]
+inputtino-python = { git = "https://github.com/games-on-whales/inputtino.git", subdirectory = "bindings/python", branch = "stable" }

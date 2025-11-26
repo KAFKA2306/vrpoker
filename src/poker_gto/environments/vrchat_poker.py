@@ -5,11 +5,12 @@ from typing import override
 
 from pamiq_core import Environment
 
+from ..actuators import Clicker
+from ..config import get_video_source
 from ..data.actions import ActionType, PokerAction
 from ..data.observations import GamePhase, PokerObservation
 
 try:
-    from pamiq_vrchat.actuators import OscActuator
     from pamiq_vrchat.sensors import ImageSensor
 
     PAMIQ_VRCHAT_AVAILABLE = True
@@ -23,16 +24,25 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
     def __init__(self):
         super().__init__()
         self.button_locations: dict[ActionType, tuple[int, int]] = {}
+
         if PAMIQ_VRCHAT_AVAILABLE:
+            # Initialize ImageSensor with configured source
+            video_source = get_video_source()
             try:
-                self.image_sensor = ImageSensor()
+                if video_source is not None:
+                    print(f"Initializing ImageSensor with source: {video_source}")
+                    self.image_sensor = ImageSensor(camera_index=video_source)
+                else:
+                    print("Initializing ImageSensor with default source (OBS Virtual Camera)")
+                    self.image_sensor = ImageSensor()
             except RuntimeError as e:
                 print(f"Warning: Failed to initialize ImageSensor: {e}")
                 self.image_sensor = None
-            self.osc_actuator = OscActuator()
         else:
             self.image_sensor = None
-            self.osc_actuator = None
+
+        # Initialize Clicker for actions
+        self.actuator = Clicker()
 
     @override
     def observe(self) -> PokerObservation:
@@ -45,8 +55,10 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
             # This is a placeholder for the actual image processing logic.
             # We assume a method `find_action_buttons` exists and returns a dict
             # like {ActionType.FOLD: (x, y), ...}.
-            if image:
-                self.button_locations = self.image_sensor.find_action_buttons(image)
+            if image is not None:
+                # TODO: Implement actual button detection
+                # self.button_locations = self.image_sensor.find_action_buttons(image)
+                pass
 
         # The rest of the observation is still a placeholder.
         # This should also be populated from image analysis.
@@ -64,15 +76,19 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
     @override
     def affect(self, action: PokerAction) -> None:
         """Execute action in VRChat."""
-        if not self.osc_actuator:
-            print(f"[MOCK] Action: {action.type.name}, Amount: {action.amount}")
-            return
-
         # Get the screen coordinates for the action.
         coords = self.button_locations.get(action.type)
 
         if coords:
-            # For BET/RAISE, a long press on a slider might be needed.
-            # This is a simplified click action for now.
             x, y = coords
-            self.osc_actuator.click(x, y)
+            # Determine duration based on action type or amount
+            # For BET/RAISE, we might want a longer press if it's a slider,
+            # but usually we click a specific amount button or type.
+            # For now, use default duration.
+            duration = 0.1
+
+            self.actuator.click(x, y, duration=duration)
+        else:
+            print(
+                f"[MOCK] Action: {action.type.name}, Amount: {action.amount} (No coordinates found)"
+            )

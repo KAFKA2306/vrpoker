@@ -1,27 +1,35 @@
 version: "3"
 
 vars:
-  TEXASSOLVER_PATH: "{{.TEXASSOLVER_PATH | default (joinPath .PWD \"TexasSolver\")}}"
+  TEXASSOLVER_PATH: '{{.TEXASSOLVER_PATH | default (joinPath .PWD "TexasSolver")}}'
 
 tasks:
   install:
     desc: 依存関係をインストール (共通)
     cmds:
-      - uv sync
+      - uv sync --all-extras
 
   install:linux:
-    desc: Linux用依存関係のインストール (sudoが必要)
+    desc: Linux用システム依存関係のインストール (sudoが必要)
     cmds:
       - sudo apt update && sudo apt install -y git cmake build-essential pkg-config libevdev-dev obs-studio
-      - uv pip install "git+https://github.com/games-on-whales/inputtino.git#subdirectory=bindings/python&branch=stable"
-      - uv pip install pamiq-vrchat
-      - task install
+      - echo "依存関係がインストールされました。次に 'task install' を実行してください。"
+
+  test:
+    desc: テストを実行
+    cmds:
+      - uv run pytest tests/ -v
+
   fix:
     desc: Lintエラーを自動修正してフォーマット
     cmds:
       - uv run ruff check src tests --fix
       - uv run ruff format src tests
-      - uv run pytest -v
+
+  lint:
+    desc: Lintチェックのみ（修正なし）
+    cmds:
+      - uv run ruff check src tests
 
   run:
     desc: VRChat Poker GTO システムを起動
@@ -37,4 +45,3 @@ tasks:
       - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
       - find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
       - find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
-
