@@ -1,0 +1,30 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install dependencies using uv
+    cmds:
+      - uv sync
+      export TEXASSOLVER_PATH=/absolute/path/to/TexasSolver
+export VRCHAT_CAPTURE_REGION='{"top":120,"left":80,"width":1280,"height":720}'
+export VRCHAT_OSC_IP=127.0.0.1
+export VRCHAT_OSC_PORT=9000
+
+
+  check:
+    desc:
+    cmds:
+      - uv run ruff check src tests --fix
+      - uv run ruff format src tests
+      - uv run pytest
+
+  run:
+    desc: Run the VRChat Poker GTO System (pamiq-core)
+    cmds:
+      - uv run vrpoker
+
+  clean:
+    desc: Clean up temporary files
+    cmds:
+      - rm -rf .venv
+      - find . -type d -name "__pycache__" -exec rm -rf {} +

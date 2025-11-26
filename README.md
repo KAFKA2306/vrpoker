@@ -1,72 +1,59 @@
-# VRChat Poker GTO Assistant
+# VRChat Poker GTO Agent (powered by pamiq-core)
 
-VRChat内のポーカーゲームでGTO戦略をアドバイスするシンプルなツール。
+Autonomous VRChat poker play built on the `pamiq-core` Agent–Environment loop. The agent captures the
+VRChat poker table, infers GTO actions with TexasSolver, and sends decisions back via OSC or overlay.
 
-## Phase 0: 最小動作プロトタイプ （実装済み）
+## Quick Start
 
-TexasSolverをPythonから実行し、結果を表示します。
+### Prerequisites
+- Python 3.12+
+- [`uv`](https://github.com/astral-sh/uv) (or `pip install -e .`)
+- TexasSolver binary (see `TexasSolver/` or supply your own)
 
-### セットアップ
-
+### Install
 ```bash
-cd vrchat-poker-gto
-pip install -r requirements.txt
+uv sync
+# or: pip install -e .
 ```
 
-### 使い方
-
-1. TexasSolverのパスを確認:
+### Configure
+Set the solver path and optional VRChat I/O knobs before running:
 ```bash
-# Linux/Mac
-which texassolver
-
-# または、プロジェクトディレクトリ内にTexasSolverがある場合
-ls -la ~/projects/TexasSolver/TexasSolver
+export TEXASSOLVER_PATH=/absolute/path/to/TexasSolver
+export VRCHAT_CAPTURE_REGION='{"top":120,"left":80,"width":1280,"height":720}'  # JSON or top=,left=...
+export VRCHAT_OSC_IP=127.0.0.1
+export VRCHAT_OSC_PORT=9000
 ```
+`TEXASSOLVER_PATH` is required; capture/OSC settings fall back to sane defaults for local dev.
 
-2. スクリプトを実行:
+### Run the agent
 ```bash
-python solver_wrapper.py
+uv run vrpoker
+# or: uv run python -m poker_gto.launch
+# task runner: task run
 ```
+Loop: **observe** the table via screen capture + OCR → **think** with `TexasSolverModel` →
+**act** through OSC/overlay actuators.
 
-3. 結果を確認:
-- コンソールに推奨アクションが表示されます
-- `last_result.json`に詳細が保存されます
+## Development
+- Lint/format: `uv run ruff check src tests --fix` then `uv run ruff format src tests`
+- Tests: `uv run pytest`
+- Full check pipeline: `task check`
+- Clean artifacts: `task clean`
 
-### カスタマイズ
+### Project layout
+- `src/poker_gto/agents/`: decision logic (`PokerAgent`)
+- `src/poker_gto/environments/`: sensors (capture/OCR) and actuators (OSC/overlay)
+- `src/poker_gto/models/`: `TexasSolverModel` wrapper for inference
+- `src/poker_gto/data/`: shared observation/action shapes
+- `src/poker_gto/launch.py`: entrypoint wiring the loop
+- `tests/`: pytest suites (see `test_smoke.py` template)
 
-`solver_wrapper.py`の`main()`関数を編集:
-```python
-result = solve_poker_situation(
-    hand="AsKh",      # あなたのハンド
-    board="Qs Jh 2h", # ボードカード
-    pot=50,           # ポットサイズ
-    stack=200,        # スタックサイズ
-    iterations=20     # イテレーション数（増やすと精度↑、時間↑）
-)
-```
+## Architecture docs
+- `docs/ARCHITECTURE.md` — system diagram and data flow
+- `docs/PAMIQ_TEXASSOLVER_INTEGRATION.md` — how the solver is wrapped as an inference model
 
-## Phase 1以降（今後実装予定）
-
-- Phase 1: 画面キャプチャ + OCR
-- Phase 2: VRChat OSC統合
-- Phase 3: pamiq-core統合（オプション）
-
-## トラブルシューティング
-
-### TexasSolverが見つからない
-```bash
-# solver_wrapper.pyで絶対パスを指定
-solver_path="/path/to/your/TexasSolver"
-```
-
-### タイムアウトエラー
-```python
-# iterations を減らす（デフォルト20→10）
-iterations=10
-```
-
-### 出力フォーマットが違う
-- `last_result.json`の内容を確認
-- TexasSolver のバージョンにより出力形式が異なる場合があります
-# vrpoker
+## Notes & tips
+- External solver builds live in `TexasSolver/`; override with `TEXASSOLVER_PATH`.
+- Keep lines ≤100 chars and favor typed, small functions with logging via `launch.setup_logging`.
+- When adding features, cover sensor parsing, solver parsing, and agent decision branches with tests.

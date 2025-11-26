@@ -1,6 +1,5 @@
 """Poker Agent implementation."""
 
-import time
 from typing import override
 
 from pamiq_core import Agent

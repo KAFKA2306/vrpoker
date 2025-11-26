@@ -1,6 +1,7 @@
 """Main entry point for VRChat Poker GTO System."""
 
 import logging
+import os
 from pathlib import Path
 
 from pamiq_core import Interaction, LaunchConfig, launch
@@ -27,11 +28,11 @@ def main() -> None:
     environment = VRChatPokerEnvironment()
 
     # Initialize models
-    # Ensure TexasSolver executable path is correct
-    solver_path = str(
-        Path.cwd().parent / "TexasSolver"
-    )  # Assuming running from src root or similar
-    # Adjust path as needed based on where user runs it
+    # Allow overriding solver path via TEXASSOLVER_PATH
+    solver_path = os.getenv("TEXASSOLVER_PATH")
+    if not solver_path:
+        # Fallback to a local TexasSolver build inside repo
+        solver_path = str(Path.cwd() / "TexasSolver" / "TexasSolver")
 
     models = {"texassolver": TexasSolverModel(solver_path=solver_path)}
 

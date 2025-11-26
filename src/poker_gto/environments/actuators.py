@@ -1,5 +1,8 @@
 """Actuators for VRChat Poker Environment."""
 
+from __future__ import annotations
+
+import os
 from typing import override
 
 from pamiq_core import Actuator
@@ -11,8 +14,13 @@ from ..data.actions import ActionType, PokerAction
 class OSCActuator(Actuator[PokerAction]):
     """Sends actions to VRChat via OSC."""
 
-    def __init__(self, ip: str = "127.0.0.1", port: int = 9000):
+    def __init__(self, ip: str | None = None, port: int | None = None):
         super().__init__()
+
+        # Allow override via env so users can point to a remote VRChat instance
+        ip = ip or os.getenv("VRCHAT_OSC_IP", "127.0.0.1")
+        port = int(port or os.getenv("VRCHAT_OSC_PORT", 9000))
+
         self.client = udp_client.SimpleUDPClient(ip, port)
 
     @override

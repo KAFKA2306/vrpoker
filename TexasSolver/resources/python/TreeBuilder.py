@@ -1,11 +1,11 @@
-import numpy as np
-import os
-import sys
 import json
 from copy import deepcopy
-import networkx as nx
+
 import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
 from networkx.drawing.nx_agraph import graphviz_layout
+
 
 class Struct:
     def __init__(self, **entries):

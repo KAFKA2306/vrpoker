@@ -11,7 +11,6 @@ from typing import Any, override
 
 from pamiq_core import InferenceWrappedModel
 
-from ..data.actions import PokerAction
 from ..data.observations import PokerObservation
 
 
@@ -84,7 +83,7 @@ dump_result output_result.json
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
             config_path = tmp_path / "solver_config.txt"
-            output_path = Path("output_result.json")  # TexasSolver dumps to CWD usually
+            _ = Path("output_result.json")  # TexasSolver dumps to CWD usually
 
             self._generate_config(input_data, config_path)
 

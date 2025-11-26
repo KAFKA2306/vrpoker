@@ -1,9 +1,12 @@
-import yaml
-import numpy as np
 import sys
+
+import numpy as np
+import yaml
+
 sys.path.append("resources")
-from python.TreeBuilder import *
 import bindSolver
+
+from python.TreeBuilder import *
 
 with open('general_rule.yaml') as fhdl:
     conf = yaml.load(fhdl)
@@ -27,7 +30,7 @@ gameTree = PartGameTreeBuilder(rule)
 
 
 depth = np.inf
-json = gameTree.gen_km_json("./.tree.km".format(depth),limit=depth,ret_json=True)
+json = gameTree.gen_km_json("./.tree.km",limit=depth,ret_json=True)
 
 #ps.build_game_tree("./resources/gametree/part_tree_turn_withallin.km")
 #ps.build_game_tree("./resources/gametree/game_tree_flop.km")

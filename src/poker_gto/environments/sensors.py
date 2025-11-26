@@ -1,6 +1,10 @@
 """Sensors for VRChat Poker Environment."""
 
-from typing import Any, override
+from __future__ import annotations
+
+import json
+import os
+from typing import override
 
 import cv2
 import mss
@@ -9,6 +13,31 @@ import pytesseract
 from pamiq_core import Sensor
 
 from ..data.observations import GamePhase, PokerObservation
+
+
+def _load_region_from_env() -> dict[str, int] | None:
+    """Return a capture region from env var if provided.
+
+    The variable `VRCHAT_CAPTURE_REGION` accepts JSON or a comma separated list
+    like ``"top=120,left=80,width=1280,height=720"``.
+    """
+
+    raw = os.getenv("VRCHAT_CAPTURE_REGION")
+    if not raw:
+        return None
+
+    try:
+        data = json.loads(raw)
+        if isinstance(data, dict):
+            return {k: int(v) for k, v in data.items()}
+    except json.JSONDecodeError:
+        pass
+
+    try:
+        parts = dict(item.split("=") for item in raw.split(","))
+        return {k.strip(): int(v) for k, v in parts.items()}
+    except Exception:
+        return None
 
 
 class ScreenCaptureSensor(Sensor[np.ndarray]):
@@ -23,7 +52,16 @@ class ScreenCaptureSensor(Sensor[np.ndarray]):
         """
         super().__init__()
         self.sct = mss.mss()
-        self.region = region or {"top": 100, "left": 100, "width": 800, "height": 600}
+        self.region = (
+            region
+            or _load_region_from_env()
+            or {
+                "top": 100,
+                "left": 100,
+                "width": 800,
+                "height": 600,
+            }
+        )
 
     @override
     def read(self) -> np.ndarray:
@@ -58,7 +96,7 @@ class PokerStateSensor(Sensor[PokerObservation]):
         # For this prototype, we assume we can extract text from the whole image
         # or that the image IS the relevant region.
 
-        text = pytesseract.image_to_string(processed)
+        _ = pytesseract.image_to_string(processed)
 
         # Mock parsing logic for prototype
         # In reality, we need robust regex parsing here.
