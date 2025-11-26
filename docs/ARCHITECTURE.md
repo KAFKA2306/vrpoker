@@ -64,5 +64,4 @@ src/poker_gto/
 
 1. **最小構成**: src を最小限に保ち、pamiq-* パッケージを最大活用
 2. **pamiq-core準拠**: Agent-Environment-Interaction パターンに厳密に従う
-3. **フォールバック**: pamiq-vrchat が利用できない環境でもモックモードで動作
 ```
