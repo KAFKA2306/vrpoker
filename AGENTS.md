@@ -1,18 +1,26 @@
 # リポジトリガイドライン
 
 ## プロジェクト構成とモジュール
-- コアソースは `src/poker_gto` にあります: ランチャー（`launch.py`）、エージェントロジック（`agents/poker_agent.py`）、環境IO（`environments/`）、ソルバーラッパー（`models/texassolver.py`）、共有データ形状（`data/`）。
+- コアソースは `src/poker_gto` にあります: ランチャー（`launch.py`）、エージェントロジック（`agents/poker_agent.py`）、環境IO（`environments/`）、ソルバーラッパー（`models/texassolver.py`）、共有データ形状（`data/`）。VRChatとの通信など、IOの基本機能は `pamiq-core` が提供します。
 - テストは `tests` にあります（pytest が `test_*.py` を検出）。既存の `test_smoke.py` をテンプレートとして使えます。
 - 外部ソースのソルバーは `TexasSolver/` に同梱されています。実行時はビルド済みバイナリ、または `TEXASSOLVER_PATH` で指定した任意のパスを参照します。
 - 追加の設計メモは `docs/`（`PAMIQ_TEXASSOLVER_INTEGRATION.md` を参照）にあります。タスク自動化は `Taskfile.yml` に定義されています。
 
 ## ビルド・テスト・開発コマンド
-- 開発環境の作成: `uv sync`（uv が無い場合は `pip install -e .`）。
-- ローカルでアプリを実行: `uv run vrpoker` または `uv run python -m poker_gto.launch`（下記の環境変数を利用）。
-- リント: `uv run ruff check src tests`（行長100文字）。
-- 自動整形: `uv run ruff format src tests`。
-- テスト実行: `uv run pytest`（`tests` を `testpaths` として認識）。
-- 生成物の掃除: `task clean`（`.venv` と `__pycache__` を削除）。
+
+プロジェクトの管理には `Taskfile.yml` を利用したタスクランナーを使用します。以下は主要なコマンドです。
+
+| コマンド       | 説明                                           |
+|--------------|------------------------------------------------|
+| `task install` | 依存関係をインストールします (`uv sync`)         |
+| `task run`     | エージェントを実行します (`uv run vrpoker`)      |
+| `task check`   | 静的解析、フォーマット、テストを全て実行します |
+| `task clean`   | 一時ファイル（`.venv`, `__pycache__`）を削除します |
+
+個別のコマンドも実行可能です:
+- リント: `uv run ruff check src tests`
+- 自動整形: `uv run ruff format src tests`
+- テスト実行: `uv run pytest`
 
 ## コーディングスタイルと命名
 - Python 3.12 をターゲット。明瞭さのため型ヒント、dataclass、Enum、`@override` を優先。

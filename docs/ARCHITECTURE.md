@@ -14,17 +14,6 @@
     - `TexasSolverModel`（`InferenceWrappedModel`）で GTO 戦略を計算する。
     - 戦略に基づき最適な `PokerAction` を選択する。
 
-### 2. 環境（`VRChatPokerEnvironment`）
-- **役割**: VRChat 世界とのインターフェース。
-- **実装**: `src/poker_gto/environments/`
-- **構成要素**:
-    - **センサー**:
-        - `ScreenCaptureSensor`: `mss` を使って VRChat ウィンドウをキャプチャ。
-        - `PokerStateSensor`: OCR（`pytesseract`）で画像からゲーム状態（カード、ポット、スタック）を抽出。
-    - **アクチュエーター**:
-        - `OSCActuator`（計画中）: OSC で VRChat へアクションを送信。
-        - `OverlayActuator`（計画中）: オーバーレイ上に助言を表示。
-
 ### 3. インタラクション
 - **役割**: エージェントと環境を接続する連続ループ。
 - **仕組み**: `pamiq-core` がスレッドと同期を管理し、リアルタイム性能を確保する。

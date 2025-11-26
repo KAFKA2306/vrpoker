@@ -1,30 +1,36 @@
 version: "3"
 
+vars:
+  TEXASSOLVER_PATH: "{{.TEXASSOLVER_PATH | default (joinPath .PWD \"TexasSolver\")}}"
+  VRCHAT_CAPTURE_REGION: "{{.VRCHAT_CAPTURE_REGION | default \"{\\\"top\\\":120,\\\"left\\\":80,\\\"width\\\":1280,\\\"height\\\":720}\"}}"
+  VRCHAT_OSC_IP: "{{.VRCHAT_OSC_IP | default \"127.0.0.1\"}}"
+  VRCHAT_OSC_PORT: "{{.VRCHAT_OSC_PORT | default \"9000\"}}"
+
 tasks:
   install:
     desc: Install dependencies using uv
     cmds:
       - uv sync
-      export TEXASSOLVER_PATH=/absolute/path/to/TexasSolver
-export VRCHAT_CAPTURE_REGION='{"top":120,"left":80,"width":1280,"height":720}'
-export VRCHAT_OSC_IP=127.0.0.1
-export VRCHAT_OSC_PORT=9000
-
 
   check:
-    desc:
+    desc: Run lint, format check, and tests
     cmds:
-      - uv run ruff check src tests --fix
-      - uv run ruff format src tests
+      - uv run ruff check src tests
+      - uv run ruff format src tests --check
       - uv run pytest
 
   run:
-    desc: Run the VRChat Poker GTO System (pamiq-core)
+    desc: Run the VRChat Poker GTO system (pamiq-core)
+    env:
+      TEXASSOLVER_PATH: "{{.TEXASSOLVER_PATH}}"
+      VRCHAT_CAPTURE_REGION: "{{.VRCHAT_CAPTURE_REGION}}"
+      VRCHAT_OSC_IP: "{{.VRCHAT_OSC_IP}}"
+      VRCHAT_OSC_PORT: "{{.VRCHAT_OSC_PORT}}"
     cmds:
       - uv run vrpoker
 
   clean:
-    desc: Clean up temporary files
+    desc: Clean up local artifacts
     cmds:
       - rm -rf .venv
       - find . -type d -name "__pycache__" -exec rm -rf {} +
