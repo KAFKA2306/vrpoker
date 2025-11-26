@@ -54,9 +54,15 @@ sequenceDiagram
 ```
 src/poker_gto/
 ├── agents/         # エージェント実装
+├── actuators/      # マウスアクチュエーター（Clicker）
 ├── data/           # データクラス（Observation/Action）
 ├── environments/   # 環境実装
 ├── models/         # InferenceModel 実装
+├── vision/         # 画像認識モジュール
+│   ├── ocr.py              # EasyOCR エンジン
+│   ├── card_detector.py    # カード検出
+│   ├── button_detector.py  # ボタン座標検出
+│   └── table_parser.py     # ポット・スタック認識
 └── launch.py       # エントリーポイント
 ```
 

@@ -9,7 +9,11 @@ dependencies = [
     "pamiq-recorder",
     "pamiq-io",
     "pamiq-vrchat",
-    "inputtino-python",
+    "inputtino-python; sys_platform == 'linux'",
+    "pydirectinput; sys_platform == 'win32'",
+    "opencv-python",
+    "easyocr",
+    "numpy",
 ]
 
 [project.optional-dependencies]
@@ -39,6 +43,7 @@ select = ["E", "F", "I", "N", "W"]
 [tool.uv]
 environments = [
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'win32'",
 ]
 
 [tool.uv.sources]

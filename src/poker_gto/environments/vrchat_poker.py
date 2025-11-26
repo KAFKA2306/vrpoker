@@ -1,14 +1,19 @@
 """VRChat Poker Environment."""
 
+import os
 import time
 from typing import override
 
+import cv2
 from pamiq_core import Environment
 
 from ..actuators import Clicker
 from ..config import get_video_source
 from ..data.actions import ActionType, PokerAction
 from ..data.observations import GamePhase, PokerObservation
+from ..vision.button_detector import ButtonDetector
+from ..vision.card_detector import CardDetector
+from ..vision.table_parser import TableParser
 
 try:
     from pamiq_vrchat.sensors import ImageSensor
@@ -24,9 +29,9 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
     def __init__(self):
         super().__init__()
         self.button_locations: dict[ActionType, tuple[int, int]] = {}
+        self.debug_mode = os.getenv("DEBUG_VISION", "0") == "1"
 
         if PAMIQ_VRCHAT_AVAILABLE:
-            # Initialize ImageSensor with configured source
             video_source = get_video_source()
             try:
                 if video_source is not None:
@@ -41,32 +46,50 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
         else:
             self.image_sensor = None
 
-        # Initialize Clicker for actions
         self.actuator = Clicker()
+
+        if self.image_sensor:
+            self.card_detector = CardDetector()
+            self.button_detector = ButtonDetector()
+            self.table_parser = TableParser()
+        else:
+            self.card_detector = None
+            self.button_detector = None
+            self.table_parser = None
 
     @override
     def observe(self) -> PokerObservation:
         """Get current state from VRChat."""
-        if self.image_sensor:
-            # Read an image from the sensor.
+        hole_cards = None
+        pot_size = 100.0
+        effective_stack = 1000.0
+
+        if self.image_sensor and self.card_detector:
             image = self.image_sensor.read()
 
-            # Find button locations from the image and cache them.
-            # This is a placeholder for the actual image processing logic.
-            # We assume a method `find_action_buttons` exists and returns a dict
-            # like {ActionType.FOLD: (x, y), ...}.
             if image is not None:
-                # TODO: Implement actual button detection
-                # self.button_locations = self.image_sensor.find_action_buttons(image)
-                pass
+                if self.debug_mode:
+                    os.makedirs("states/debug", exist_ok=True)
+                    cv2.imwrite(
+                        f"states/debug/frame_{int(time.time())}.png",
+                        cv2.cvtColor(image, cv2.COLOR_RGB2BGR),
+                    )
 
-        # The rest of the observation is still a placeholder.
-        # This should also be populated from image analysis.
+                cards = self.card_detector.detect_cards(image)
+                if len(cards) >= 2:
+                    hole_cards = [f"{rank}{suit}" for rank, suit in cards[:2]]
+
+                buttons = self.button_detector.detect_buttons(image)
+                self.button_locations = buttons
+
+                pot_size = self.table_parser.parse_pot(image) or 100.0
+                effective_stack = self.table_parser.parse_stack(image) or 1000.0
+
         return PokerObservation(
             game_phase=GamePhase.PREFLOP,
-            pot_size=100.0,
-            effective_stack=1000.0,
-            hole_cards=None,
+            pot_size=pot_size,
+            effective_stack=effective_stack,
+            hole_cards=hole_cards,
             board_cards=[],
             position="IP",
             action_history=[],
@@ -76,15 +99,10 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
     @override
     def affect(self, action: PokerAction) -> None:
         """Execute action in VRChat."""
-        # Get the screen coordinates for the action.
         coords = self.button_locations.get(action.type)
 
         if coords:
             x, y = coords
-            # Determine duration based on action type or amount
-            # For BET/RAISE, we might want a longer press if it's a slider,
-            # but usually we click a specific amount button or type.
-            # For now, use default duration.
             duration = 0.1
 
             self.actuator.click(x, y, duration=duration)

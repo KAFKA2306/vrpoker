@@ -1,12 +1,10 @@
 """Tests for VRChat Poker Agent configuration."""
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-from pamiq_vrchat.sensors import ImageSensor
 
-from poker_gto.actuators import Clicker
 from poker_gto.environments.vrchat_poker import VRChatPokerEnvironment
 
 

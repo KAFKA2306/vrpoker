@@ -38,6 +38,16 @@ tasks:
     cmds:
       - uv run vrpoker
 
+  install:win:
+    desc: Windows用依存関係をインストール (WSL2から実行)
+    cmds:
+      - powershell.exe -ExecutionPolicy Bypass -File install-windows.ps1
+
+  run:win:
+    desc: Windows版を起動 (WSL2から実行)
+    cmds:
+      - powershell.exe -ExecutionPolicy Bypass -File run-windows.ps1
+
   clean:
     desc: ローカルアーティファクトをクリーンアップ
     cmds:

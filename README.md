@@ -55,9 +55,26 @@ task run
 
 Windowsでは`pydirectinput`を使用してマウス操作を実行します。これは最も確実な方法です。
 
+**ネイティブWindows:**
 1. OBS Studioをインストールし、仮想カメラを有効化
 2. VRChatを起動
 3. `task run`でエージェントを起動
+
+**WSL2からWindows実行:**
+```bash
+# 初回のみ: Windows用依存関係をインストール
+task install:win
+
+# エージェント起動（Windows Python + Windows APIを使用）
+task run:win
+```
+
+または、PowerShellスクリプトを直接実行：
+```powershell
+# Windowsから
+.\install-windows.ps1  # 初回のみ
+.\run-windows.ps1      # エージェント起動
+```
 
 ### WSL2環境
 
@@ -92,13 +109,31 @@ task run
 - [x] ビデオソース設定システム（`VRCHAT_VIDEO_SOURCE`）
 - [x] クロスプラットフォーム`Clicker`アクチュエーター（Windows/Linux）
 - [x] `TexasSolverModel`のラッパー実装
+- [x] **画像認識**: EasyOCR + OpenCVによる認識エンジン
+- [x] **カード検出**: 輪郭検出とOCRでランク・スート認識
+- [x] **ボタン検出**: OCRでFold/Call/Raiseボタンの座標特定
+- [x] **ゲーム状態パース**: ポット額・スタック額のOCR認識
 
-### 🚧 実装予定（モックアップ禁止、必ず実装）
-- [ ] **画像認識**: カード、ポット、スタックのOCR
-- [ ] **ボタン検出**: Fold/Call/Raiseボタンの座標特定
-- [ ] **ゲーム状態パース**: 実際の`PokerObservation`の生成
+### 🚧 実装予定
 - [ ] **TexasSolver統合**: 実際のGTO計算の実行
-- [ ] **エラーハンドリングの削除**: 失敗時は即座にクラッシュ（仕様）
+- [ ] **ゲームフェーズ検出**: プリフロップ/フロップ/ターン/リバーの判定
+- [ ] **ボードカード認識**: フロップ以降のコミュニティカード検出
+- [ ] **認識精度向上**: 画像前処理の最適化、信頼度チェック
+
+## デバッグモード
+
+ビジョンモジュールのデバッグには、環境変数`DEBUG_VISION=1`を設定してください：
+
+```bash
+export DEBUG_VISION=1
+task run
+# または
+task run:win
+```
+
+キャプチャされた各フレームが`states/debug/`に保存されます。
+
+---
 
 ## 開発
 
@@ -124,4 +159,8 @@ task fix
 - pamiq-vrchat 0.1.0
 - pamiq-recorder 0.3.0
 - inputtino-python 0.1.0（Linux）
+- pydirectinput 1.0.4（Windows）
+- opencv-python 4.11+
+- easyocr 1.7+
+- numpy
 - TexasSolver（オプション）
