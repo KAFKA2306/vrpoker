@@ -1,7 +1,7 @@
 [project]
-name = "vrchat-poker-gto"
+name = "vrchat-poker-agent"
 version = "0.1.0"
-description = "VRChat Poker GTO system with pamiq-core integration."
+description = "VRChat Poker Agent with pamiq-core."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
