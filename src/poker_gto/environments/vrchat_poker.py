@@ -9,7 +9,7 @@ from ..data.actions import ActionType, PokerAction
 from ..data.observations import GamePhase, PokerObservation
 
 try:
-    from pamiq_vrchat.actuators import OscActuator, OscButtons
+    from pamiq_vrchat.actuators import OscActuator
     from pamiq_vrchat.sensors import ImageSensor
 
     PAMIQ_VRCHAT_AVAILABLE = True
@@ -22,6 +22,7 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
 
     def __init__(self):
         super().__init__()
+        self.button_locations: dict[ActionType, tuple[int, int]] = {}
         if PAMIQ_VRCHAT_AVAILABLE:
             try:
                 self.image_sensor = ImageSensor()
@@ -37,8 +38,18 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
     def observe(self) -> PokerObservation:
         """Get current state from VRChat."""
         if self.image_sensor:
-            _ = self.image_sensor.read()
+            # Read an image from the sensor.
+            image = self.image_sensor.read()
 
+            # Find button locations from the image and cache them.
+            # This is a placeholder for the actual image processing logic.
+            # We assume a method `find_action_buttons` exists and returns a dict
+            # like {ActionType.FOLD: (x, y), ...}.
+            if image:
+                self.button_locations = self.image_sensor.find_action_buttons(image)
+
+        # The rest of the observation is still a placeholder.
+        # This should also be populated from image analysis.
         return PokerObservation(
             game_phase=GamePhase.PREFLOP,
             pot_size=100.0,
@@ -57,13 +68,11 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
             print(f"[MOCK] Action: {action.type.name}, Amount: {action.amount}")
             return
 
-        action_val = None
-        if action.type == ActionType.FOLD:
-            action_val = OscButtons.Jump
-        elif action.type in (ActionType.CHECK, ActionType.CALL):
-            action_val = OscButtons.Run
-        elif action.type in (ActionType.BET, ActionType.RAISE, ActionType.ALLIN):
-            action_val = OscButtons.MoveForward
+        # Get the screen coordinates for the action.
+        coords = self.button_locations.get(action.type)
 
-        if action_val:
-            self.osc_actuator.operate({"buttons": {action_val: True}})
+        if coords:
+            # For BET/RAISE, a long press on a slider might be needed.
+            # This is a simplified click action for now.
+            x, y = coords
+            self.osc_actuator.click(x, y)

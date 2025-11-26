@@ -6,13 +6,16 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pamiq-core",
+    "pamiq-recorder",
+    "pamiq-io",
+    "pamiq-vrchat",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4",
-    "pytest-asyncio>=0.21",
-    "ruff>=0.1",
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
 ]
 
 [project.scripts]
@@ -31,12 +34,3 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_functions = ["test_*"]
-
-
-
-

@@ -181,3 +181,4 @@ cython_debug/
 moc_*.cpp
 ui_*.h
 qrc_*.cpptmp_install/
+states/
