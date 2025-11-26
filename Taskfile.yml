@@ -8,23 +8,11 @@ tasks:
     desc: 依存関係をインストール
     cmds:
       - uv sync
-
-  check:
-    desc: Lint、フォーマット、テストを実行
-    cmds:
-      - uv run ruff check src tests
-      - uv run ruff format src tests --check
-      - uv run pytest -v
-
   fix:
     desc: Lintエラーを自動修正してフォーマット
     cmds:
       - uv run ruff check src tests --fix
       - uv run ruff format src tests
-
-  test:
-    desc: テストを実行
-    cmds:
       - uv run pytest -v
 
   run:
