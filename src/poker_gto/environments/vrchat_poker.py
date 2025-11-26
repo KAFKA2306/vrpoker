@@ -5,11 +5,11 @@ from typing import override
 
 from pamiq_core import Environment
 
-from ..data.actions import PokerAction
+from ..data.actions import ActionType, PokerAction
 from ..data.observations import GamePhase, PokerObservation
 
 try:
-    from pamiq_vrchat.actuators import OscActuator
+    from pamiq_vrchat.actuators import OscActuator, OscButtons
     from pamiq_vrchat.sensors import ImageSensor
 
     PAMIQ_VRCHAT_AVAILABLE = True
@@ -57,4 +57,13 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
             print(f"[MOCK] Action: {action.type.name}, Amount: {action.amount}")
             return
 
-        self.osc_actuator.send_poker_action(action)
+        action_val = None
+        if action.type == ActionType.FOLD:
+            action_val = OscButtons.Jump
+        elif action.type in (ActionType.CHECK, ActionType.CALL):
+            action_val = OscButtons.Run
+        elif action.type in (ActionType.BET, ActionType.RAISE, ActionType.ALLIN):
+            action_val = OscButtons.MoveForward
+
+        if action_val:
+            self.osc_actuator.operate({"buttons": {action_val: True}})
