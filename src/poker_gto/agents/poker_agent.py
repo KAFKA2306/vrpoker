@@ -1,5 +1,6 @@
+from typing import override
+
 from pamiq_core import Agent
-from typing_extensions import override
 
 from ..data.actions import ActionType, PokerAction
 from ..data.observations import GamePhase, PokerObservation

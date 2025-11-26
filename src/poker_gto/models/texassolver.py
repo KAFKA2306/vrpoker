@@ -1,21 +1,20 @@
 """TexasSolver model implementation for pamiq-core.
 
-This module wraps the TexasSolver CLI as a pamiq-core InferenceWrappedModel.
+This module wraps the TexasSolver CLI as a pamiq-core InferenceModel.
 """
 
 import json
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
-from pamiq_core import InferenceWrappedModel
-from typing_extensions import override
+from pamiq_core.model.interface import InferenceModel
 
 from ..data.observations import PokerObservation
 
 
-class TexasSolverModel(InferenceWrappedModel[PokerObservation, dict[str, float]]):
+class TexasSolverModel(InferenceModel):
     """TexasSolver wrapper model.
 
     Takes a PokerObservation and returns a strategy dictionary (action -> frequency).
@@ -34,17 +33,12 @@ class TexasSolverModel(InferenceWrappedModel[PokerObservation, dict[str, float]]
             iterations: Number of CFR iterations
             threads: Number of threads to use
         """
-        super().__init__()
         self.solver_path = solver_path
         self.iterations = iterations
         self.threads = threads
 
     def _generate_config(self, obs: PokerObservation, config_path: Path) -> None:
         """Generate TexasSolver configuration file."""
-        # Note: This is a simplified config generation for MVP.
-        # In a real scenario, we need to map ranges and board cards accurately.
-
-        # Convert board cards list to string
         board_str = ",".join(obs.board_cards) if obs.board_cards else ""
 
         config_content = f"""set_pot {obs.pot_size}
@@ -65,8 +59,16 @@ dump_result output_result.json
         config_path.write_text(config_content)
 
     @override
-    def infer(self, input_data: PokerObservation) -> dict[str, float]:
+    def infer(self, *args: Any, **kwds: Any) -> dict[str, float]:
         """Run TexasSolver and return strategy."""
+        if len(args) > 0:
+            input_data = args[0]
+        else:
+            input_data = kwds.get("input_data")
+
+        if not isinstance(input_data, PokerObservation):
+            return {"fold": 1.0}
+
         try:
             with tempfile.TemporaryDirectory() as tmp_dir:
                 tmp_path = Path(tmp_dir)
@@ -91,17 +93,3 @@ dump_result output_result.json
                 return {"fold": 1.0}
         except Exception:
             return {"fold": 1.0}
-
-    @override
-    def get_state_dict(self) -> dict[str, Any]:
-        return {
-            "solver_path": self.solver_path,
-            "iterations": self.iterations,
-            "threads": self.threads,
-        }
-
-    @override
-    def load_state_dict(self, state_dict: dict[str, Any]) -> None:
-        self.solver_path = state_dict.get("solver_path", self.solver_path)
-        self.iterations = state_dict.get("iterations", self.iterations)
-        self.threads = state_dict.get("threads", self.threads)

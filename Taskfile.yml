@@ -2,35 +2,43 @@ version: "3"
 
 vars:
   TEXASSOLVER_PATH: "{{.TEXASSOLVER_PATH | default (joinPath .PWD \"TexasSolver\")}}"
-  VRCHAT_CAPTURE_REGION: "{{.VRCHAT_CAPTURE_REGION | default \"{\\\"top\\\":120,\\\"left\\\":80,\\\"width\\\":1280,\\\"height\\\":720}\"}}"
-  VRCHAT_OSC_IP: "{{.VRCHAT_OSC_IP | default \"127.0.0.1\"}}"
-  VRCHAT_OSC_PORT: "{{.VRCHAT_OSC_PORT | default \"9000\"}}"
 
 tasks:
   install:
-    desc: Install dependencies using uv
+    desc: 依存関係をインストール
     cmds:
       - uv sync
 
   check:
-    desc: Run lint, format check, and tests
+    desc: Lint、フォーマット、テストを実行
     cmds:
       - uv run ruff check src tests
       - uv run ruff format src tests --check
-      - uv run pytest
+      - uv run pytest -v
+
+  fix:
+    desc: Lintエラーを自動修正してフォーマット
+    cmds:
+      - uv run ruff check src tests --fix
+      - uv run ruff format src tests
+
+  test:
+    desc: テストを実行
+    cmds:
+      - uv run pytest -v
 
   run:
-    desc: Run the VRChat Poker GTO system (pamiq-core)
+    desc: VRChat Poker GTO システムを起動
     env:
       TEXASSOLVER_PATH: "{{.TEXASSOLVER_PATH}}"
-      VRCHAT_CAPTURE_REGION: "{{.VRCHAT_CAPTURE_REGION}}"
-      VRCHAT_OSC_IP: "{{.VRCHAT_OSC_IP}}"
-      VRCHAT_OSC_PORT: "{{.VRCHAT_OSC_PORT}}"
     cmds:
       - uv run vrpoker
 
   clean:
-    desc: Clean up local artifacts
+    desc: ローカルアーティファクトをクリーンアップ
     cmds:
-      - rm -rf .venv
-      - find . -type d -name "__pycache__" -exec rm -rf {} +
+      - rm -rf .venv uv.lock
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
+

@@ -3,16 +3,12 @@ name = "vrchat-poker-agent"
 version = "0.1.0"
 description = "VRChat Poker Agent with pamiq-core."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "pamiq-core",
-    "typing-extensions",
 ]
 
 [project.optional-dependencies]
-vrchat = [
-    "pamiq-vrchat",
-]
 dev = [
     "pytest>=7.4",
     "pytest-asyncio>=0.21",
@@ -31,7 +27,7 @@ packages = ["src/poker_gto"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
@@ -40,5 +36,7 @@ select = ["E", "F", "I", "N", "W"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
+
+
 
 
