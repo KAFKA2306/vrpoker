@@ -32,6 +32,6 @@ task run
 - `src/poker_gto/data/`: 共有の観測/アクション形状
 - `src/poker_gto/launch.py`: ループを配線するエントリーポイント
 
-## アーキテクチャドキュメント
-- `docs/ARCHITECTURE.md` — システム図とデータフロー
+ ## アーキテクチャドキュメント
+- `docs/SETUP_AND_RUN.md` — 初期設定と実行手順- `docs/ARCHITECTURE.md` — システム図とデータフロー
 - `docs/PAMIQ_TEXASSOLVER_INTEGRATION.md` — ソルバーが推論モデルとしてどのようにラップされているか
