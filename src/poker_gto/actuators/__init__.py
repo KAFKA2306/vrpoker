@@ -1,3 +1,2 @@
-from .clicker import Clicker
-
-__all__ = ["Clicker"]
+from pamiq_io.mouse import InputtinoMouseOutput, MouseOutput
+__all__ = ["InputtinoMouseOutput", "MouseOutput"]
