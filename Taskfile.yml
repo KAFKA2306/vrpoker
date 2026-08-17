@@ -7,7 +7,7 @@ tasks:
   install:
     desc: 依存関係をインストール (共通)
     cmds:
-      - uv sync --all-extras
+      - uv sync --locked --all-extras
 
   install:linux:
     desc: Linux用システム依存関係のインストール (sudoが必要)
@@ -15,28 +15,34 @@ tasks:
       - sudo apt update && sudo apt install -y git cmake build-essential pkg-config libevdev-dev obs-studio
       - echo "依存関係がインストールされました。次に 'task install' を実行してください。"
 
+  check:
+    desc: lint とテストを実行
+    cmds:
+      - uv run --locked ruff check src tests
+      - uv run --locked pytest tests/ -v
+
   test:
     desc: テストを実行
     cmds:
-      - uv run pytest tests/ -v
+      - uv run --locked pytest tests/ -v
 
   fix:
     desc: Lintエラーを自動修正してフォーマット
     cmds:
-      - uv run ruff check src tests --fix
-      - uv run ruff format src tests
+      - uv run --locked ruff check src tests --fix
+      - uv run --locked ruff format src tests
 
   lint:
     desc: Lintチェックのみ（修正なし）
     cmds:
-      - uv run ruff check src tests
+      - uv run --locked ruff check src tests
 
   run:
     desc: VRChat Poker GTO システムを起動
     env:
       TEXASSOLVER_PATH: "{{.TEXASSOLVER_PATH}}"
     cmds:
-      - uv run vrpoker
+      - uv run --locked vrpoker
 
   install:win:
     desc: Windows用依存関係をインストール (WSL2から実行)
@@ -51,7 +57,7 @@ tasks:
   clean:
     desc: ローカルアーティファクトをクリーンアップ
     cmds:
-      - rm -rf .venv uv.lock
+      - rm -rf .venv
       - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
       - find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
       - find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
