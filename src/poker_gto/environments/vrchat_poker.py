@@ -1,26 +1,36 @@
 """VRChat Poker Environment."""
+
 import os
 import time
 from typing import override
+
 import cv2
 from pamiq_core import Environment
+
 from ..config import get_video_source
 from ..data.actions import ActionType, PokerAction
 from ..data.observations import GamePhase, PokerObservation
+
 try:
     from pamiq_io.mouse import InputtinoMouseOutput
+
     PAMIQ_IO_AVAILABLE = True
 except ImportError:
     PAMIQ_IO_AVAILABLE = False
     InputtinoMouseOutput = None
+
 try:
     from pamiq_vrchat.sensors import ImageSensor
+
     PAMIQ_VRCHAT_AVAILABLE = True
 except ImportError:
     PAMIQ_VRCHAT_AVAILABLE = False
     ImageSensor = None
+
+
 class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
     """Environment representing the VRChat Poker world."""
+
     def __init__(self):
         super().__init__()
         self.button_locations: dict[ActionType, tuple[int, int]] = {}
@@ -50,6 +60,7 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
         else:
             print("Warning: pamiq-io not available, using mock actuator")
             self.actuator = None
+
     @override
     def observe(self) -> PokerObservation:
         """Get current state from VRChat."""
@@ -74,6 +85,7 @@ class VRChatPokerEnvironment(Environment[PokerObservation, PokerAction]):
             action_history=[],
             timestamp=time.time(),
         )
+
     @override
     def affect(self, action: PokerAction) -> None:
         """Execute action in VRChat."""
