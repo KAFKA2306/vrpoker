@@ -1,166 +1,110 @@
-# VRChat Poker エージェント
+# VRChat Poker Agent
 
-`pamiq-core` のエージェント-環境ループ上に構築された、自律的なVRChatポーカープレイエージェントです。エージェントはVRChatのポーカーテーブルをキャプチャし、TexasSolverでGTOアクションを推論し、マウスクリック経由で決定を実行します。
+VRChat のポーカーテーブルを画面から読み取り、判断結果を入力操作へつなぐための実験的な Python プロジェクトです。
 
-## クイックスタート
+## 現在確認できる範囲
 
-### インストール
+リポジトリには次の実装があります。
+
+- `pamiq-core` の Agent / Environment / Interaction を使う実行入口
+- `pamiq-vrchat.ImageSensor` を使う画面入力
+- OpenCV / EasyOCR を使うカード、ボタン、ポット、スタックの認識コード
+- マウス入力を送る `Clicker`
+- TexasSolver CLI 用の設定生成と subprocess 呼び出し
+
+CI で確認するのは Python の lint と既存 unit tests です。実際の VRChat セッション、OCR 精度、マウス入力、TexasSolver のビルド済み実行ファイルを使った戦略計算は CI では確認しません。
+
+`TexasSolverModel` の実装が存在することと、実環境で正しい戦略計算が完了することは別です。後者は未検証として扱います。
+
+## セットアップ
+
+Python 3.12 以上と `uv`、Task が必要です。
+
 ```bash
 task install
+task check
 ```
 
-### エージェントの実行
+`uv.lock` を使って依存関係を固定します。
+
+## 実行
+
 ```bash
 task run
 ```
-ループ: スクリーンキャプチャ + OCRでテーブルを **観察** → `TexasSolverModel` で **思考** → マウスクリックアクチュエーターで **行動**。
 
-## アーキテクチャ
-
-### PAMIQエコシステム統合
-
-このプロジェクトは以下の`pamiq`ライブラリを使用します：
-
-- **pamiq-core**: エージェント-環境ループのコアフレームワーク
-- **pamiq-io**: ビデオ、オーディオ、マウス入出力
-- **pamiq-vrchat**: VRChat特化のセンサー（ImageSensor）
-- **pamiq-recorder**: セッション記録
-
-### コンポーネント
-
-- **Agent** (`src/poker_gto/agents/poker_agent.py`): GTO戦略の決定ロジック
-- **Environment** (`src/poker_gto/environments/vrchat_poker.py`): VRChatとのインタラクション
-- **Sensors**: `pamiq-vrchat.ImageSensor` でゲーム画面をキャプチャ
-- **Actuators**: `Clicker` でポーカーアクションボタンをクリック
-- **Model** (`src/poker_gto/models/texassolver.py`): TexasSolverのラッパー
-
-## 環境設定
-
-### ビデオソース設定
-
-エージェントはデフォルトで「OBS Virtual Camera」を検索します。別のソースを使用する場合は、`VRCHAT_VIDEO_SOURCE`環境変数を設定してください：
+ビデオ入力を明示する場合は `VRCHAT_VIDEO_SOURCE` を設定します。
 
 ```bash
-# カメラインデックスを指定（Windowsの場合）
-export VRCHAT_VIDEO_SOURCE=0
-
-# RTSPストリームを指定（WSL2からWindowsのOBSにアクセスする場合）
 export VRCHAT_VIDEO_SOURCE="rtsp://192.168.1.100:8554/live"
-
-# その後エージェントを実行
 task run
 ```
 
-### Windows環境
+カメラインデックスも指定できます。
 
-Windowsでは`pydirectinput`を使用してマウス操作を実行します。これは最も確実な方法です。
-
-**ネイティブWindows:**
-1. OBS Studioをインストールし、仮想カメラを有効化
-2. VRChatを起動
-3. `task run`でエージェントを起動
-
-**WSL2からWindows実行:**
 ```bash
-# 初回のみ: Windows用依存関係をインストール
-task install:win
+export VRCHAT_VIDEO_SOURCE=0
+task run
+```
 
-# エージェント起動（Windows Python + Windows APIを使用）
+`TEXASSOLVER_PATH` を指定しない場合、実行入口はリポジトリ内の `TexasSolver/TexasSolver` を参照します。リポジトリには TexasSolver のソースコードがありますが、CI ではその実行ファイルをビルドしません。
+
+## Windows / WSL2
+
+Windows 用の補助スクリプトがあります。
+
+```bash
+task install:win
 task run:win
 ```
 
-または、PowerShellスクリプトを直接実行：
-```powershell
-# Windowsから
-.\install-windows.ps1  # 初回のみ
-.\run-windows.ps1      # エージェント起動
-```
+これらは特定の Windows / WSL2 実行環境を必要とし、GitHub Actions では確認しません。
 
-### WSL2環境
-
-WSL2では以下の2つのアプローチがあります：
-
-#### アプローチ1: Windows OBSからのRTSPストリーミング（推奨）
-
-1. Windows側でOBS StudioのRTSPプラグインを設定
-2. WSL2から以下のように設定：
-```bash
-export VRCHAT_VIDEO_SOURCE="rtsp://<WindowsのIPアドレス>:8554/live"
-task run
-```
-
-#### アプローチ2: Linuxネイティブモード
+Linux 向けのシステム依存関係は次で導入できます。
 
 ```bash
-# システム依存関係とinputtinoのインストール
 task install:linux
-
-# inputtinoを使用してマウス入力を送信
-task run
+task install
 ```
 
-**注意**: WSL2からWindowsアプリケーション（VRChat）への入力送信には追加設定が必要です。本番環境ではWindows上での直接実行を推奨します。
+## デバッグ
 
-## 現在の実装状態
-
-### ✅ 完了
-- [x] `pamiq-core`統合（Agent, Environment, Interaction）
-- [x] 依存関係のインストールとセットアップ
-- [x] ビデオソース設定システム（`VRCHAT_VIDEO_SOURCE`）
-- [x] クロスプラットフォーム`Clicker`アクチュエーター（Windows/Linux）
-- [x] `TexasSolverModel`のラッパー実装
-- [x] **画像認識**: EasyOCR + OpenCVによる認識エンジン
-- [x] **カード検出**: 輪郭検出とOCRでランク・スート認識
-- [x] **ボタン検出**: OCRでFold/Call/Raiseボタンの座標特定
-- [x] **ゲーム状態パース**: ポット額・スタック額のOCR認識
-
-### 🚧 実装予定
-- [ ] **TexasSolver統合**: 実際のGTO計算の実行
-- [ ] **ゲームフェーズ検出**: プリフロップ/フロップ/ターン/リバーの判定
-- [ ] **ボードカード認識**: フロップ以降のコミュニティカード検出
-- [ ] **認識精度向上**: 画像前処理の最適化、信頼度チェック
-
-## デバッグモード
-
-ビジョンモジュールのデバッグには、環境変数`DEBUG_VISION=1`を設定してください：
+`DEBUG_VISION=1` を設定すると、認識処理のデバッグ用フレームを `states/debug/` に保存します。
 
 ```bash
 export DEBUG_VISION=1
 task run
-# または
-task run:win
 ```
-
-キャプチャされた各フレームが`states/debug/`に保存されます。
-
----
 
 ## 開発
 
-詳細は以下を参照：
-- [アーキテクチャ](docs/ARCHITECTURE.md)
-- [TexasSolver統合](docs/PAMIQ_TEXASSOLVER_INTEGRATION.md)
-
-### テスト実行
 ```bash
-uv run pytest tests/
-```
+# lint + tests
+task check
 
-### Lint & Format
-```bash
+# tests only
+task test
+
+# lint only
+task lint
+
+# lint の自動修正と format
 task fix
 ```
 
-## 依存関係
+## 主な構成
 
-- Python 3.12+
-- pamiq-core 0.6.0
-- pamiq-io 0.6.1
-- pamiq-vrchat 0.1.0
-- pamiq-recorder 0.3.0
-- inputtino-python 0.1.0（Linux）
-- pydirectinput 1.0.4（Windows）
-- opencv-python 4.11+
-- easyocr 1.7+
-- numpy
-- TexasSolver（オプション）
+- `src/poker_gto/agents/` — action selection
+- `src/poker_gto/environments/` — VRChat 入出力
+- `src/poker_gto/models/texassolver.py` — TexasSolver CLI 呼び出し
+- `src/poker_gto/vision/` — OCR / image processing
+- `tests/` — unit tests
+- `TexasSolver/` — TexasSolver source tree
+
+## 未検証・未完了
+
+- 実際の VRChat テーブルを使った end-to-end 実行
+- TexasSolver のビルドと実戦略計算
+- game phase と board card recognition の実環境精度
+- OCR confidence に基づく誤操作防止
+- Windows / WSL2 / Linux の各入力経路の実機確認
