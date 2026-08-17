@@ -1,17 +1,24 @@
 """Main entry point for VRChat Poker GTO System."""
+
 import logging
 import os
 from pathlib import Path
+
 from pamiq_core import Interaction, LaunchConfig, launch
+
 from .agents import PokerAgent
 from .environments import VRChatPokerEnvironment
 from .models import TexasSolverModel
+
+
 def setup_logging() -> None:
     """Configure logging."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+
+
 def main() -> None:
     """Launch the system."""
     setup_logging()
@@ -34,5 +41,7 @@ def main() -> None:
         trainers={},
         config=config,
     )
+
+
 if __name__ == "__main__":
     main()
