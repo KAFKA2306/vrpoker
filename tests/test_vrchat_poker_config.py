@@ -1,15 +1,22 @@
 """Tests for VRChat Poker Agent configuration."""
+
 import os
 from unittest.mock import patch
+
 import pytest
+
 from poker_gto.environments.vrchat_poker import VRChatPokerEnvironment
+
+
 @pytest.fixture
 def mock_pamiq_vrchat():
     with (
         patch("poker_gto.environments.vrchat_poker.ImageSensor") as mock_sensor,
-        patch("poker_gto.environments.vrchat_poker.Clicker") as mock_actuator,
+        patch("poker_gto.environments.vrchat_poker.InputtinoMouseOutput") as mock_actuator,
     ):
         yield mock_sensor, mock_actuator
+
+
 def test_init_default(mock_pamiq_vrchat):
     """Test initialization with default settings (no env var)."""
     mock_sensor_cls, mock_actuator_cls = mock_pamiq_vrchat
@@ -20,6 +27,8 @@ def test_init_default(mock_pamiq_vrchat):
     mock_actuator_cls.assert_called_once()
     assert env.image_sensor is not None
     assert env.actuator is not None
+
+
 def test_init_with_video_source_url(mock_pamiq_vrchat):
     """Test initialization with video source URL."""
     mock_sensor_cls, mock_actuator_cls = mock_pamiq_vrchat
@@ -28,6 +37,8 @@ def test_init_with_video_source_url(mock_pamiq_vrchat):
         env = VRChatPokerEnvironment()
         mock_sensor_cls.assert_called_once_with(camera_index=test_url)
         assert env.image_sensor is not None
+
+
 def test_init_with_video_source_index(mock_pamiq_vrchat):
     """Test initialization with video source index."""
     mock_sensor_cls, mock_actuator_cls = mock_pamiq_vrchat
