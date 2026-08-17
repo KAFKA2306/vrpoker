@@ -1,17 +1,24 @@
 """TexasSolver model implementation for pamiq-core.
 This module wraps the TexasSolver CLI as a pamiq-core TrainingModel.
 """
+
 import json
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any, override
+
 from pamiq_core.model.interface import InferenceModel, TrainingModel
+
 from ..data.observations import PokerObservation
+
+
 class _TexasSolverInference(InferenceModel):
     """TexasSolver inference model.
+
     Takes a PokerObservation and returns a strategy dictionary (action -> frequency).
     """
+
     def __init__(
         self,
         solver_path: str = "./TexasSolver",
@@ -19,6 +26,7 @@ class _TexasSolverInference(InferenceModel):
         threads: int = 4,
     ):
         """Initialize the model.
+
         Args:
             solver_path: Path to TexasSolver executable
             iterations: Number of CFR iterations
@@ -27,6 +35,7 @@ class _TexasSolverInference(InferenceModel):
         self.solver_path = solver_path
         self.iterations = iterations
         self.threads = threads
+
     def _generate_config(self, obs: PokerObservation, config_path: Path) -> None:
         """Generate TexasSolver configuration file."""
         board_str = ",".join(obs.board_cards) if obs.board_cards else ""
@@ -46,6 +55,7 @@ start_solve
 dump_result output_result.json
 """
         config_path.write_text(config_content)
+
     @override
     def infer(self, *args: Any, **kwds: Any) -> dict[str, float]:
         """Run TexasSolver and return strategy."""
@@ -75,10 +85,14 @@ dump_result output_result.json
                 return {"fold": 1.0}
         except Exception:
             return {"fold": 1.0}
+
+
 class TexasSolverModel(TrainingModel[_TexasSolverInference]):
     """TexasSolver wrapper model for pamiq-core.
+
     This is an inference-only model that wraps TexasSolver CLI.
     """
+
     def __init__(
         self,
         solver_path: str = "./TexasSolver",
@@ -86,6 +100,7 @@ class TexasSolverModel(TrainingModel[_TexasSolverInference]):
         threads: int = 4,
     ):
         """Initialize the model.
+
         Args:
             solver_path: Path to TexasSolver executable
             iterations: Number of CFR iterations
@@ -95,6 +110,7 @@ class TexasSolverModel(TrainingModel[_TexasSolverInference]):
         self.solver_path = solver_path
         self.iterations = iterations
         self.threads = threads
+
     @override
     def _create_inference_model(self) -> _TexasSolverInference:
         """Create inference model."""
@@ -103,18 +119,22 @@ class TexasSolverModel(TrainingModel[_TexasSolverInference]):
             iterations=self.iterations,
             threads=self.threads,
         )
+
     @override
     def forward(self, *args: Any, **kwds: Any) -> Any:
         """Forward is not used for inference-only models."""
         return self.inference_model.infer(*args, **kwds)
+
     @override
     def sync_impl(self, inference_model: _TexasSolverInference) -> None:
         """No sync needed for inference-only model."""
         pass
+
     @override
     def save_state(self, path: Path) -> None:
         """No state to save for inference-only model."""
         path.mkdir(parents=True, exist_ok=True)
+
     @override
     def load_state(self, path: Path) -> None:
         """No state to load for inference-only model."""
