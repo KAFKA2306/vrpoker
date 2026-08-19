@@ -1,20 +1,25 @@
 # VRChat Poker Agent
 
-VRChat のポーカーテーブルを画面から読み取り、判断結果を入力操作へつなぐための実験的な Python プロジェクトです。
+VRChat のポーカーテーブルを対象に、画面入力・状態表現・戦略計算・入力操作を試すための実験的な Python プロジェクトです。
 
-## 現在確認できる範囲
+## 現在の実装境界
 
-リポジトリには次の実装があります。
+現在のコードには次の部品があります。
 
 - `pamiq-core` の Agent / Environment / Interaction を使う実行入口
-- `pamiq-vrchat.ImageSensor` を使う画面入力
-- OpenCV / EasyOCR を使うカード、ボタン、ポット、スタックの認識コード
-- マウス入力を送る `Clicker`
+- `pamiq-vrchat.ImageSensor` を初期化する画面入力経路
+- OpenCV / EasyOCR を使うカード、ボタン、ポット、スタック認識モジュール
+- `pamiq-io` の `InputtinoMouseOutput` 初期化
 - TexasSolver CLI 用の設定生成と subprocess 呼び出し
 
-CI で確認するのは Python の lint と既存 unit tests です。実際の VRChat セッション、OCR 精度、マウス入力、TexasSolver のビルド済み実行ファイルを使った戦略計算は CI では確認しません。
+ただし、これらは現在 end-to-end では接続されていません。
 
-`TexasSolverModel` の実装が存在することと、実環境で正しい戦略計算が完了することは別です。後者は未検証として扱います。
+- `VRChatPokerEnvironment.observe()` はフレームを読み取りますが、認識モジュールを呼び出さず、game phase、pot、stack、position には固定の placeholder 値を返します。
+- `VRChatPokerEnvironment.affect()` は action をログ出力しますが、現在はマウスクリックを送信しません。
+- `TexasSolverModel` はCLI wrapperを持ちますが、CIではTexasSolver executableをbuild・実行しません。
+- sensor / mouse output の初期化失敗時は処理を継続するため、実デバイスが接続されていること自体も起動成功だけでは証明できません。
+
+したがって、現在のリポジトリを「自律ポーカーAgent」や「GTO計算済み」とは扱いません。
 
 ## セットアップ
 
@@ -27,49 +32,40 @@ task check
 
 `uv.lock` を使って依存関係を固定します。
 
-## 実行
-
-```bash
-task run
-```
-
-ビデオ入力を明示する場合は `VRCHAT_VIDEO_SOURCE` を設定します。
-
-```bash
-export VRCHAT_VIDEO_SOURCE="rtsp://192.168.1.100:8554/live"
-task run
-```
-
-カメラインデックスも指定できます。
-
-```bash
-export VRCHAT_VIDEO_SOURCE=0
-task run
-```
-
-`TEXASSOLVER_PATH` を指定しない場合、実行入口はリポジトリ内の `TexasSolver/TexasSolver` を参照します。リポジトリには TexasSolver のソースコードがありますが、CI ではその実行ファイルをビルドしません。
-
-## Windows / WSL2
-
-Windows 用の補助スクリプトがあります。
-
-```bash
-task install:win
-task run:win
-```
-
-これらは特定の Windows / WSL2 実行環境を必要とし、GitHub Actions では確認しません。
-
-Linux 向けのシステム依存関係は次で導入できます。
+Linuxで`inputtino`のbuildに必要なsystem packageを入れる場合は次を使います。
 
 ```bash
 task install:linux
 task install
 ```
 
+## 実行
+
+```bash
+task run
+```
+
+ビデオ入力を明示する場合は `VRCHAT_VIDEO_SOURCE` を設定できます。
+
+```bash
+export VRCHAT_VIDEO_SOURCE=0
+task run
+```
+
+URLも指定できます。
+
+```bash
+export VRCHAT_VIDEO_SOURCE="rtsp://192.168.1.100:8554/live"
+task run
+```
+
+`TEXASSOLVER_PATH` を指定しない場合はリポジトリ内の `TexasSolver/TexasSolver` を参照します。リポジトリにはTexasSolverのsource treeがありますが、CIでは実行ファイルをbuildしません。
+
+Windows / WSL2 の実機起動経路は現在検証済みの手順として提供していません。
+
 ## デバッグ
 
-`DEBUG_VISION=1` を設定すると、認識処理のデバッグ用フレームを `states/debug/` に保存します。
+`DEBUG_VISION=1` を設定すると、取得できたフレームを `states/debug/` に保存します。
 
 ```bash
 export DEBUG_VISION=1
@@ -92,19 +88,22 @@ task lint
 task fix
 ```
 
+CIはlocked dependency sync、Ruff、既存unit tests、clean working treeを確認します。
+
 ## 主な構成
 
 - `src/poker_gto/agents/` — action selection
 - `src/poker_gto/environments/` — VRChat 入出力
-- `src/poker_gto/models/texassolver.py` — TexasSolver CLI 呼び出し
+- `src/poker_gto/models/texassolver.py` — TexasSolver CLI wrapper
 - `src/poker_gto/vision/` — OCR / image processing
 - `tests/` — unit tests
 - `TexasSolver/` — TexasSolver source tree
 
 ## 未検証・未完了
 
-- 実際の VRChat テーブルを使った end-to-end 実行
-- TexasSolver のビルドと実戦略計算
-- game phase と board card recognition の実環境精度
-- OCR confidence に基づく誤操作防止
+- 認識モジュールを `observe()` の実game stateへ接続すること
+- 認識confidence不足時に入力操作を停止すること
+- actionを実際のVRChat UI clickへ接続すること
+- TexasSolverのbuildと実戦略計算
+- 実際のVRChatテーブルを使ったend-to-end実行
 - Windows / WSL2 / Linux の各入力経路の実機確認
